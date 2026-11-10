@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify generated bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Install translator dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: tools
+
+      - name: Rebuild from the committed source snapshot
+        run: node tools/build.mjs --from-snapshot
+
+      - name: Smoke-test the generated client bundle
+        run: node tools/verify-client.mjs
+
+      - name: Fail when lib/client.js is out of date
+        run: |
+          if git diff --quiet -- lib/client.js; then
+            echo "lib/client.js matches the committed source snapshot."
+            exit 0
+          fi
+          echo "::error file=lib/client.js::lib/client.js is out of date. Run 'node tools/build.mjs' locally (or dispatch the Auto-translate workflow) and commit the result."
+          git diff --stat -- lib/client.js
+          exit 1

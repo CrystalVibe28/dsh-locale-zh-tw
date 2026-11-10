@@ -1,0 +1,95 @@
+name: Auto-translate
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: DSH version to translate (npm dist-tag or exact semver)
+        required: false
+        default: next
+        type: string
+  schedule:
+    # Every Monday 04:00 Asia/Taipei (Sunday 20:00 UTC).
+    - cron: '0 20 * * 0'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-translate
+  cancel-in-progress: false
+
+jobs:
+  translate:
+    name: Refresh translations from npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Install translator dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: tools
+
+      - name: Fetch DSH sources from the npm registry
+        run: >-
+          node tools/fetch-dsh-source.mjs
+          --version "${{ inputs.version || 'next' }}"
+          --out .dsh-source
+
+      - name: Regenerate the Traditional Chinese bundle
+        run: >-
+          node tools/build.mjs
+          --source .dsh-source/node_modules
+          --version "$(cat .dsh-source/dsh-version.txt)"
+
+      - name: Smoke-test the generated client bundle
+        run: node tools/verify-client.mjs
+
+      - name: Open or refresh the translation pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="$(cat .dsh-source/dsh-version.txt)"
+          if git diff --quiet -- lib/client.js tools/dsh-packages.json tools/plugins.json tools/out/source-snapshot.json; then
+            echo "Nothing to translate: the generated bundle already matches DSH ${VERSION}."
+            exit 0
+          fi
+
+          BRANCH="auto/translate-${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "${BRANCH}" 2>/dev/null || git switch "${BRANCH}"
+          git add -A
+          git commit -m "chore(i18n): 重新產生正體中文翻譯（DSH ${VERSION}）"
+          git push --force origin "${BRANCH}"
+
+          if gh pr view "${BRANCH}" --json number >/dev/null 2>&1; then
+            gh pr comment "${BRANCH}" --body "已依 DSH ${VERSION} 重新產生翻譯。"
+            exit 0
+          fi
+
+          gh pr create \
+            --base main \
+            --head "${BRANCH}" \
+            --title "chore(i18n): 重新產生正體中文翻譯（DSH ${VERSION}）" \
+            --body "此 PR 由 **Auto-translate** workflow 自動建立。
+
+          - 從 npm registry 取得 DSH \`${VERSION}\` 的介面字典與插件顯示中繼資料
+          - 以 OpenCC \`cn → twp\` 與台灣用語校正表重新產生 \`lib/client.js\`
+          - 已通過品質閘門（placeholder／換行／殘留簡體字）與離線煙霧測試
+
+          審閱重點：\`lib/client.js\` 的翻譯差異、\`tools/dsh-packages.json\` 的版本更新、\`tools/out/source-snapshot.json\` 的來源快照。
+
+          合併後，重新整理 DSH 網頁即可載入新的翻譯。"

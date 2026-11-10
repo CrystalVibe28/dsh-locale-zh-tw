@@ -1,0 +1,14 @@
+{
+  "name": "dsh-locale-zh-tw-tools",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Build tooling that extracts the shipped Simplified Chinese dictionaries from the DSH desktop app and emits a Traditional Chinese (zh-TW) language pack.",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@babel/parser": "^8.1.0",
+    "opencc-js": "^1.4.2"
+  }
+}

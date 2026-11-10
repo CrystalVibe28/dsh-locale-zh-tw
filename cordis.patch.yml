@@ -1,0 +1,3 @@
+- insert:
+    - id: locale-zh-tw
+      name: '@local/dsh-locale-zh-tw'
