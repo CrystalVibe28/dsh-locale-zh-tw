@@ -118,6 +118,7 @@ const GLOSSARY = [
   ['文本', '文字'],
   ['斷開', '中斷'],
   ['身份', '身分'],
+  ['使用者', '使用者（測試）'],
 ]
 /** Whole-value replacements, for copy whose meaning depends on the button it labels. */
 const VALUE_OVERRIDES = new Map([['撤銷', '復原']])
