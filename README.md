@@ -46,6 +46,8 @@ node verify-client.mjs
 ## GitHub Actions
 
 - **`.github/workflows/ci.yml`**（push／PR）：從已提交的來源快照重建、跑煙霧測試，若 `lib/client.js` 與快照不一致就讓 CI 失敗。
+> 注意：Auto-translate 會在 workflow 內先跑建置、品質閘門與煙霧測試，才建立／更新 PR。GitHub 對「由 `GITHUB_TOKEN` 建立的 PR」不會再次觸發 `pull_request` workflow，因此自動 PR 本身可能沒有額外的 CI 執行；合併後 main 的 CI 仍會完整驗證。Fork 本倉庫後，請在 **Settings → Actions → General** 開啟 **Allow GitHub Actions to create and approve pull requests**（本倉庫已開啟）。
+
 - **`.github/workflows/translate.yml`**（每週一 04:00 台北時間、可手動觸發）：
   1. `tools/fetch-dsh-source.mjs` 從公共 npm registry 下載 `tools/dsh-packages.json` 列出、且會被翻譯讀取的 DSH 套件（可指定 `next` 或精確版本）；
   2. `build.mjs --source` 重新產生翻譯並跑品質閘門與煙霧測試；
