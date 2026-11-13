@@ -45,15 +45,16 @@ node verify-client.mjs
 
 ## GitHub Actions
 
-- **`.github/workflows/ci.yml`**（push／PR）：從已提交的來源快照重建、跑煙霧測試，若 `lib/client.js` 與快照不一致就讓 CI 失敗。
-> 注意：Auto-translate 會在 workflow 內先跑建置、品質閘門與煙霧測試，才建立／更新 PR。GitHub 對「由 `GITHUB_TOKEN` 建立的 PR」不會再次觸發 `pull_request` workflow，因此自動 PR 本身可能沒有額外的 CI 執行；合併後 main 的 CI 仍會完整驗證。Fork 本倉庫後，請在 **Settings → Actions → General** 開啟 **Allow GitHub Actions to create and approve pull requests**（本倉庫已開啟）。
+- **`.github/workflows/ci.yml`**（push／PR／可手動指定分支）：從已提交的來源快照重建、跑煙霧測試，若 `lib/client.js` 與快照不一致就讓 CI 失敗。
+> 注意：由 `GITHUB_TOKEN` 建立的 PR，GitHub 會建立對應的 `pull_request` 執行，但拒絕實際執行（0 個 job、直接標記失敗），因此自動 PR 上那個紅色 ✗ 無法產生任何紀錄。Auto-translate 會在推送分支後改以 `gh workflow run ci.yml --ref <branch>` 觸發一次真正的 CI，結果以該次執行為準。Fork 本倉庫後，請在 **Settings → Actions → General** 開啟 **Allow GitHub Actions to create and approve pull requests**（本倉庫已開啟）。
 
 - **`.github/workflows/translate.yml`**（每日 04:00 台北時間、可手動觸發）：
   1. `tools/fetch-dsh-source.mjs` 從公共 npm registry 下載 `tools/dsh-packages.json` 列出、且會被翻譯讀取的 DSH 套件（可指定 `next` 或精確版本）；
   2. `build.mjs --source` 重新產生翻譯並跑品質閘門與煙霧測試；
-  3. 有差異時建立／更新 `auto/translate-<version>` 分支與 Pull Request，內容含 `lib/client.js`、版本清單與來源快照。
+  3. 有差異時建立／更新 `auto/translate-<version>` 分支與 Pull Request，內容含 `lib/client.js`、版本清單與來源快照；
+  4. 對該分支觸發真正的 CI 驗證。
 
-> 排程只在預設分支（`main`）生效；若倉庫連續 60 天沒有任何活動，GitHub 會暫停排程，需在 **Actions** 頁面按 **Enable workflow** 重新啟用。想立即補上新版本時，直接手動觸發：`gh workflow run translate.yml -f version=next`。
+> 排程只在預設分支（`main`）生效；若倉庫連續 60 天沒有任何活動，GitHub 會暫停排程，需在 **Actions** 頁面按 **Enable workflow** 重新啟用。想立即補上新版本時，直接手動觸發：`gh workflow run translate.yml -f version=next`（`version` 可填 `next`、`latest` 或精確 semver）。
 
 ## 翻譯其他插件
 

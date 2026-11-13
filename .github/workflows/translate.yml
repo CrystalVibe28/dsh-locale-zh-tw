@@ -15,6 +15,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 concurrency:
   group: auto-translate
@@ -57,12 +58,15 @@ jobs:
         run: node tools/verify-client.mjs
 
       - name: Open or refresh the translation pull request
+        id: pr
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           VERSION="$(cat .dsh-source/dsh-version.txt)"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           if git diff --quiet -- lib/client.js tools/dsh-packages.json tools/plugins.json tools/out/source-snapshot.json; then
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
             echo "Nothing to translate: the generated bundle already matches DSH ${VERSION}."
             exit 0
           fi
@@ -74,6 +78,7 @@ jobs:
           git add -A
           git commit -m "chore(i18n): 重新產生正體中文翻譯（DSH ${VERSION}）"
           git push --force origin "${BRANCH}"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
 
           if gh pr view "${BRANCH}" --json number >/dev/null 2>&1; then
             gh pr comment "${BRANCH}" --body "已依 DSH ${VERSION} 重新產生翻譯。"
@@ -93,3 +98,23 @@ jobs:
           審閱重點：\`lib/client.js\` 的翻譯差異、\`tools/dsh-packages.json\` 的版本更新、\`tools/out/source-snapshot.json\` 的來源快照。
 
           合併後，重新整理 DSH 網頁即可載入新的翻譯。"
+
+      - name: Verify the translation branch with CI
+        if: steps.pr.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BRANCH="auto/translate-${{ steps.pr.outputs.version }}"
+          # A pull request opened with GITHUB_TOKEN gets a refused pull_request run
+          # (zero jobs, red X), so trigger CI on the pushed branch explicitly.
+          for attempt in 1 2 3 4 5; do
+            if gh workflow run ci.yml --repo "${{ github.repository }}" --ref "${BRANCH}"; then
+              echo "Dispatched CI for ${BRANCH}."
+              exit 0
+            fi
+            echo "Attempt ${attempt} failed; retrying in 5s."
+            sleep 5
+          done
+          echo "::error::Could not dispatch CI for ${BRANCH}."
+          exit 1
