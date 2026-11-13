@@ -9,8 +9,8 @@ on:
         default: next
         type: string
   schedule:
-    # Every Monday 04:00 Asia/Taipei (Sunday 20:00 UTC).
-    - cron: '0 20 * * 0'
+    # Every day 04:00 Asia/Taipei (20:00 UTC on the previous UTC day).
+    - cron: '0 20 * * *'
 
 permissions:
   contents: write
