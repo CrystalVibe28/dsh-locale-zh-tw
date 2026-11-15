@@ -1,0 +1,8 @@
+node_modules/
+.pnpm-store/
+.dsh-source/
+tools/node_modules/
+tools/out/*.json
+!tools/out/source-snapshot.json
+*.log
+.DS_Store

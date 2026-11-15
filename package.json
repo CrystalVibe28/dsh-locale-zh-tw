@@ -1,0 +1,50 @@
+{
+  "name": "@local/dsh-locale-zh-tw",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Traditional Chinese (zh-TW) language pack for the DSH Web GUI",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "locale",
+    "zh-TW",
+    "traditional-chinese"
+  ],
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CrystalVibe28/dsh-locale-zh-tw.git"
+  },
+  "homepage": "https://github.com/CrystalVibe28/dsh-locale-zh-tw#readme",
+  "bugs": {
+    "url": "https://github.com/CrystalVibe28/dsh-locale-zh-tw/issues"
+  }
+}
