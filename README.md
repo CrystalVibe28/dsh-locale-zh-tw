@@ -3,21 +3,31 @@
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）網頁介面的 **正體中文（台灣，`zh-TW`）語言包**，以 DSH 用戶端插件形式提供，並附上可重現的建置流程與 GitHub Actions 自動翻譯。
 
 - 語言選項：設定 → 一般 → 語言 → **正體中文**（切換即時生效，偏好持久化到 `locale.preference`）。
-- 覆蓋 **75 個 locale 命名空間、4,108 條介面文案**：DSH 內建的 73 個命名空間，加上已安裝插件（`dsh-pet` 的 `pet.config`／`pet.chat`）。
-- 插件名稱／描述（`LocalizedText`，271 個套件／子路徑插件）也一併轉成正體中文。
+- 覆蓋 **75 個 locale 命名空間、4,421 條介面文案**：DSH 內建的 73 個命名空間，加上已安裝插件（`dsh-pet` 的 `pet.config`／`pet.chat`）。
+- 插件名稱／描述（`LocalizedText`，530 條顯示文案，轉出 515 條）也一併轉成正體中文。
 - 未收錄的簡體文字以 3,241 對字元對照表＋術語表即時轉換；英文與已是正體中文的文字不受影響。
 - 缺譯或未來新增的文案會沿 `zh-TW → zh → en` fallback 鏈顯示，不會出現空白或 key。
 
 ## 安裝
 
-這是標準 DSH bundle（`package.json` 內含 `dsh.bundle.patch` 與 `dsh.client`）。用 `plugin_manager` 指向本目錄安裝，或從本倉庫安裝：
+這是標準 DSH bundle（`package.json` 內含 `dsh.bundle.patch` 與 `dsh.client`），**直接從 GitHub 安裝即可，不需要 clone**：
 
-```
-plugin_manager install_bundle target=<本目錄絕對路徑>
-plugin_manager install_bundle target=github:CrystalVibe28/dsh-locale-zh-tw
+1. 開啟 DSH 的 **外掛 → 安裝**，貼上倉庫網址：
+
+   ```
+   https://github.com/CrystalVibe28/dsh-locale-zh-tw
+   ```
+
+   等效於 `github:CrystalVibe28/dsh-locale-zh-tw`：pnpm 會抓 `main` 分支的 tarball，並在 `~/.dsh/profiles/<profile>/pnpm-lock.yaml` 鎖定當時的 commit。
+2. 安裝後重新整理網頁，於 **設定 → 一般 → 語言** 選擇 **正體中文**。
+
+開發迭代時改用 `link:` 指向本機目錄，改完重跑建置即生效：
+
+```bash
+plugin_manager install_bundle target=link:/absolute/path/to/dsh-locale-zh-tw
 ```
 
-安裝後重新整理網頁，於「設定 → 一般 → 語言」選擇 **正體中文**。
+> 從 GitHub 安裝的是**某個 commit 的快照副本**（放在 `~/.dsh/profiles/<profile>/node_modules/@local/dsh-locale-zh-tw`），本機改了原始碼不會自動反映。介面會以 `already-installed` 拒絕重複安裝，因此更新方式是**先移除外掛、再貼網址重新安裝**（或直接對 profile 執行 `pnpm add github:CrystalVibe28/dsh-locale-zh-tw`，會重新解析 `main` 的最新 commit）。Auto-translate 的 PR 合併後，同樣要更新一次安裝才會在介面生效。
 
 ## 翻譯怎麼來的
 
