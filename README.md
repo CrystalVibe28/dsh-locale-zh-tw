@@ -21,13 +21,21 @@
    等效於 `github:CrystalVibe28/dsh-locale-zh-tw`：pnpm 會抓 `main` 分支的 tarball，並在 `~/.dsh/profiles/<profile>/pnpm-lock.yaml` 鎖定當時的 commit。
 2. 安裝後重新整理網頁，於 **設定 → 一般 → 語言** 選擇 **正體中文**。
 
+發佈到 npm 後，也可以改用 registry 版本安裝，這樣 DSH 才會顯示「版本」清單與更新按鈕：
+
+```
+@crystalvibe28/dsh-locale-zh-tw
+```
+
 開發迭代時改用 `link:` 指向本機目錄，改完重跑建置即生效：
 
 ```bash
 plugin_manager install_bundle target=link:/absolute/path/to/dsh-locale-zh-tw
 ```
 
-> 從 GitHub 安裝的是**某個 commit 的快照副本**（放在 `~/.dsh/profiles/<profile>/node_modules/@local/dsh-locale-zh-tw`），本機改了原始碼不會自動反映。介面會以 `already-installed` 拒絕重複安裝，因此更新方式是**先移除外掛、再貼網址重新安裝**（或直接對 profile 執行 `pnpm add github:CrystalVibe28/dsh-locale-zh-tw`，會重新解析 `main` 的最新 commit）。Auto-translate 的 PR 合併後，同樣要更新一次安裝才會在介面生效。
+> 從 GitHub 安裝的是**某個 commit 的快照副本**（放在 `~/.dsh/profiles/<profile>/node_modules/@crystalvibe28/dsh-locale-zh-tw`），本機改了原始碼不會自動反映。介面會以 `already-installed` 拒絕重複安裝，因此更新方式是**先移除外掛、再貼網址重新安裝**（或直接對 profile 執行 `pnpm add github:CrystalVibe28/dsh-locale-zh-tw`，會重新解析 `main` 的最新 commit）。Auto-translate 的 PR 合併後，同樣要更新一次安裝才會在介面生效。
+
+**為什麼 GitHub 安裝不會出現「更新」**：DSH 的更新偵測只查 npm registry 的 semver 清單（`semver.gt` 比對已安裝版本），而且「版本」區塊只對以 registry 安裝的外掛顯示；Git 來源的外掛沒有版本清單，只能由市集索引提供釘死 commit 的 spec 來更新。因此要讓 DSH 自動看到新版本，必須安裝 npm registry 版本（見下一節）。
 
 ## 翻譯怎麼來的
 
@@ -61,10 +69,26 @@ node verify-client.mjs
 - **`.github/workflows/translate.yml`**（每日 04:00 台北時間、可手動觸發）：
   1. `tools/fetch-dsh-source.mjs` 從公共 npm registry 下載 `tools/dsh-packages.json` 列出、且會被翻譯讀取的 DSH 套件（可指定 `next` 或精確版本）；
   2. `build.mjs --source` 重新產生翻譯並跑品質閘門與煙霧測試；
-  3. 有差異時建立／更新 `auto/translate-<version>` 分支與 Pull Request，內容含 `lib/client.js`、版本清單與來源快照；
-  4. 對該分支觸發真正的 CI 驗證。
+  3. **翻譯內容有差異時把 `package.json` 的 patch 版號加一**（例如 `1.2.0` → `1.2.1`）；
+  4. 建立／更新 `auto/translate-<version>` 分支與 Pull Request，內容含 `lib/client.js`、版本清單、來源快照與新的版號；
+  5. 對該分支觸發真正的 CI 驗證。
+
+- **`.github/workflows/release.yml`**（push 到 `main`、可手動觸發）：讀取 `package.json` 版號，若 npm registry 還沒有這個版本就 `pnpm publish`。**未設定 `NPM_TOKEN` secret 時只會留一則 notice 並略過**，不會讓 CI 失敗。
 
 > 排程只在預設分支（`main`）生效；若倉庫連續 60 天沒有任何活動，GitHub 會暫停排程，需在 **Actions** 頁面按 **Enable workflow** 重新啟用。想立即補上新版本時，直接手動觸發：`gh workflow run translate.yml -f version=next`（`version` 可填 `next`、`latest` 或精確 semver）。
+
+## 版號與更新偵測
+
+DSH（0.2.2-rc.3）的更新偵測**只看 npm registry**：
+
+- `dsh-plugin-manager` 以 `pnpm view <name> versions` 取得已發佈版本，用 `semver.gt` 篩出比已安裝版本新的版本（`src/versions.ts` 的 `newerVersions`）。
+- 外掛頁的「版本」區塊只在該 bundle 被判定為 `update: 'registry'` 時渲染；以 Git 安裝的 bundle 沒有版本清單，只會由市集（Discover）索引提供釘死 commit 的 spec 來更新（`src/client/versions.tsx` 的 `VersionSection`）。
+
+因此本專案的做法是：
+
+1. **每次翻譯內容變動就遞增 patch 版號**（由 `translate.yml` 完成），版號是 DSH 判斷「有沒有更新」的唯一依據。
+2. **PR 合併後由 `release.yml` 發佈到 npm**。要啟用發佈，需在倉庫 **Settings → Secrets and variables → Actions** 新增 `NPM_TOKEN`，該 token 所屬的 npm 帳號必須擁有 `@crystalvibe28` 這個 scope（可在 npm 建立同名組織，或把 `package.json` 與 `cordis.patch.yml` 的 scope 改成你擁有的名稱）。
+3. 使用者以 **npm registry 版本**（`@crystalvibe28/dsh-locale-zh-tw`）安裝後，外掛頁的「版本」區塊就會列出較新版本並提供更新；以 GitHub 網址安裝者仍需先移除再重裝。
 
 ## 翻譯其他插件
 
@@ -83,7 +107,7 @@ node verify-client.mjs
 ```
 lib/client.js          產生檔：語言定義、字典、中繼資料表、resolveText 轉接器
 lib/index.js           Host 半部（只承載 bundle 資料列）
-cordis.patch.yml       插入 locale-zh-tw 資料列
+cordis.patch.yml       插入 dsh-locale-zh-tw 資料列
 locale/*.json          插件自身顯示名稱（en／zh／zh-TW）
 icon.svg               插件圖示
 tools/build.mjs        建置＋台灣用語校正＋品質閘門
