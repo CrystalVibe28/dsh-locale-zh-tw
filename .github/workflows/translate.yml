@@ -71,6 +71,18 @@ jobs:
             exit 0
           fi
 
+          # 翻譯內容有變動才遞增 patch 版號。DSH 只以 npm registry 的 semver
+          # 判斷更新，每次內容更新都要有新的版號才會被視為可更新版本。
+          PLUGIN_VERSION="$(node -e "
+            const fs = require('node:fs')
+            const manifest = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+            const [major, minor, patch] = manifest.version.split('.').map(Number)
+            manifest.version = major + '.' + minor + '.' + (patch + 1)
+            fs.writeFileSync('package.json', JSON.stringify(manifest, null, 2) + '\n')
+            process.stdout.write(manifest.version)
+          ")"
+          echo "plugin_version=${PLUGIN_VERSION}" >> "$GITHUB_OUTPUT"
+
           BRANCH="auto/translate-${VERSION}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -92,6 +104,7 @@ jobs:
             --body "此 PR 由 **Auto-translate** workflow 自動建立。
 
           - 從 npm registry 取得 DSH \`${VERSION}\` 的介面字典與插件顯示中繼資料
+          - 語言包版號遞增為 \`${PLUGIN_VERSION}\`
           - 以 OpenCC \`cn → twp\` 與台灣用語校正表重新產生 \`lib/client.js\`
           - 已通過品質閘門（placeholder／換行／殘留簡體字）與離線煙霧測試
 

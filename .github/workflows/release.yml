@@ -1,0 +1,62 @@
+name: Release
+
+# DSH 只以 npm registry 的 semver 清單判斷外掛是否有更新；因此翻譯 PR 合併後
+# 必須把新版本發佈到 npm，使用者端的「版本」區塊才會出現更新按鈕。
+# 未設定 NPM_TOKEN secret 時這個 workflow 只會略過發佈，不會失敗。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to npm when the version is new
+    runs-on: ubuntu-latest
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Read the package version
+        id: package
+        run: |
+          set -euo pipefail
+          NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Explain the skipped publish
+        if: env.NODE_AUTH_TOKEN == ''
+        run: |
+          echo "::notice::未設定 NPM_TOKEN secret，略過 ${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} 的 npm 發佈。DSH 的更新偵測需要這個版本出現在 npm registry。"
+
+      - name: Publish when the registry does not have this version
+        if: env.NODE_AUTH_TOKEN != ''
+        run: |
+          set -euo pipefail
+          NAME="${{ steps.package.outputs.name }}"
+          VERSION="${{ steps.package.outputs.version }}"
+          if npm view "${NAME}@${VERSION}" version >/dev/null 2>&1; then
+            echo "${NAME}@${VERSION} 已存在於 npm registry，略過發佈。"
+            exit 0
+          fi
+          pnpm publish --access public --no-git-checks
+          echo "已發佈 ${NAME}@${VERSION}。"
