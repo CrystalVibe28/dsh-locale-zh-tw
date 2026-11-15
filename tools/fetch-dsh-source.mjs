@@ -95,6 +95,7 @@ const stagingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dsh-source-'))
 
 const versions = new Map()
 let completed = 0
+let fallbackCount = 0
 const failures = []
 
 async function fetchPackage(target) {
@@ -103,15 +104,21 @@ async function fetchPackage(target) {
   try {
     metadata = await withRetries(`${target.name}@${requested}`, () => fetchJson(packageUrl(target.name, requested)))
   } catch (error) {
-    // A pinned version can disappear or never exist on npm for a package that
-    // skipped a release; fall back to the manifest's dist-tag.
-    if (releaseVersion === undefined && manifest.tag !== undefined) {
-      const tagged = await fetchJson(packageUrl(target.name, manifest.tag)).catch(() => undefined)
-      if (tagged !== undefined) metadata = tagged
-      else throw error
-    } else {
-      throw error
+    // Vendored packages (for example the cordis plugins) version independently
+    // from the DSH release, and a pinned version can be unpublished. Fall back
+    // to the version the app bundles, then to the package's own dist-tag.
+    const fallbacks = []
+    if (releaseVersion !== undefined && target.version !== releaseVersion) fallbacks.push(target.version)
+    if (manifest.tag !== undefined) fallbacks.push(manifest.tag)
+    for (const candidate of fallbacks) {
+      const picked = await fetchJson(packageUrl(target.name, candidate)).catch(() => undefined)
+      if (picked === undefined) continue
+      metadata = picked
+      fallbackCount += 1
+      console.log(`  fallback: ${target.name} ${requested} -> ${picked.version}`)
+      break
     }
+    if (metadata === undefined) throw error
   }
   const tarballUrl = metadata?.dist?.tarball
   if (typeof tarballUrl !== 'string') throw new Error(`${target.name}: response has no dist.tarball`)
@@ -182,6 +189,6 @@ if (releaseVersion !== undefined) {
   console.log(`updated ${path.relative(here, args.manifest)} -> DSH ${releaseVersion}`)
 }
 
-console.log(`fetched ${versions.size} packages into ${nodeModulesDir}`)
+console.log(`fetched ${versions.size} packages into ${nodeModulesDir}${fallbackCount === 0 ? '' : ` (${fallbackCount} version fallback(s))`}`)
 console.log(`DSH version: ${summary.dshVersion}`)
 console.log(`next: node tools/build.mjs --source ${path.relative(here, nodeModulesDir)} --version ${summary.dshVersion}`)

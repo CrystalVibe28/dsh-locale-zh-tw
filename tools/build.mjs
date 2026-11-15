@@ -544,13 +544,11 @@ fs.writeFileSync(path.join(outDir, 'package-text-zh-tw.json'), JSON.stringify(pa
 fs.writeFileSync(path.join(outDir, 'qa-report.json'), JSON.stringify(report, null, 2))
 
 if (mode !== 'snapshot') {
+  // Deterministic on purpose: CI rebuilds this snapshot from npm and must
+  // reproduce the committed bytes, so no timestamps or environment counts.
   fs.writeFileSync(snapshotPath, JSON.stringify({
     schemaVersion: 1,
     dshVersion,
-    generatedAt: report.generatedAt,
-    bundles: { shipped: shippedBundleCount, installed: installedBundles },
-    packages: sourcePackageCount,
-    owners,
     dictionaries,
     metadata: metadataStrings,
   }, null, 1) + '\n')
