@@ -87,7 +87,11 @@ DSH（0.2.2-rc.3）的更新偵測**只看 npm registry**：
 因此本專案的做法是：
 
 1. **每次翻譯內容變動就遞增 patch 版號**（由 `translate.yml` 完成），版號是 DSH 判斷「有沒有更新」的唯一依據。
-2. **PR 合併後由 `release.yml` 發佈到 npm**。要啟用發佈，需在倉庫 **Settings → Secrets and variables → Actions** 新增 `NPM_TOKEN`，該 token 所屬的 npm 帳號必須擁有 `@crystalvibe28` 這個 scope（可在 npm 建立同名組織，或把 `package.json` 與 `cordis.patch.yml` 的 scope 改成你擁有的名稱）。
+2. **PR 合併後由 `release.yml` 發佈到 npm**。發佈預設為關閉，需同時設定兩個條件才會啟用：
+   - 倉庫變數 `NPM_PUBLISH=true`（Settings → Secrets and variables → Actions → Variables）
+   - `NPM_TOKEN` secret 所屬的 npm 帳號擁有 `@crystalvibe28` 這個 scope（可在 npm 建立同名組織，或把 `package.json`、`cordis.patch.yml` 與 README 的 scope 改成你擁有的名稱）
+
+   目前 `@crystalvibe28` scope 尚未開通，直接發佈會得到 `E404`（npm 對沒有權限的 scope 會回 404），因此先保持 opt-in 關閉，等 scope 準備好再打開。
 3. 使用者以 **npm registry 版本**（`@crystalvibe28/dsh-locale-zh-tw`）安裝後，外掛頁的「版本」區塊就會列出較新版本並提供更新；以 GitHub 網址安裝者仍需先移除再重裝。
 
 ## 翻譯其他插件

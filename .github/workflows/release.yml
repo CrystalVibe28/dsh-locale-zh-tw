@@ -2,7 +2,9 @@ name: Release
 
 # DSH 只以 npm registry 的 semver 清單判斷外掛是否有更新；因此翻譯 PR 合併後
 # 必須把新版本發佈到 npm，使用者端的「版本」區塊才會出現更新按鈕。
-# 未設定 NPM_TOKEN secret 時這個 workflow 只會略過發佈，不會失敗。
+# 發佈需要同時滿足兩個條件，否則只留 notice 並略過，不會讓 CI 失敗：
+#   1. 倉庫變數 NPM_PUBLISH = 'true'（Settings → Secrets and variables → Actions → Variables）
+#   2. NPM_TOKEN secret 所屬的 npm 帳號擁有 package.json 裡的 scope
 
 on:
   push:
@@ -44,12 +46,12 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Explain the skipped publish
-        if: env.NODE_AUTH_TOKEN == ''
+        if: env.NODE_AUTH_TOKEN == '' || vars.NPM_PUBLISH != 'true'
         run: |
-          echo "::notice::未設定 NPM_TOKEN secret，略過 ${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} 的 npm 發佈。DSH 的更新偵測需要這個版本出現在 npm registry。"
+          echo "::notice::略過 ${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }} 的 npm 發佈：需要 NPM_TOKEN secret，且倉庫變數 NPM_PUBLISH=true。DSH 的更新偵測需要這個版本出現在 npm registry。"
 
       - name: Publish when the registry does not have this version
-        if: env.NODE_AUTH_TOKEN != ''
+        if: env.NODE_AUTH_TOKEN != '' && vars.NPM_PUBLISH == 'true'
         run: |
           set -euo pipefail
           NAME="${{ steps.package.outputs.name }}"
