@@ -54,7 +54,7 @@ const snapshotPath = path.join(outDir, 'source-snapshot.json')
 const manifestPath = path.join(here, 'dsh-packages.json')
 const pluginsPath = path.join(here, 'plugins.json')
 
-const PACKAGE_NAME = '@local/dsh-locale-zh-tw'
+const PACKAGE_NAME = '@crystalvibe28/dsh-locale-zh-tw'
 const LOCALE_ID = 'zh-TW'
 const LOCALE_LABEL = '正體中文'
 const DEFAULT_ASAR = '/Applications/DeepSeek Harness.app/Contents/Resources/app.asar'

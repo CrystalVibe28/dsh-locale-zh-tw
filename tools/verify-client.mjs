@@ -129,7 +129,7 @@ vm.runInContext(source, context, { filename: clientFile })
 
 check(captured !== undefined, 'bundle calls window.__ModuleLoader__.load')
 if (!captured) process.exit(1)
-check(captured.id === '@local/dsh-locale-zh-tw', 'module id equals the package name (got ' + captured.id + ')')
+check(captured.id === '@crystalvibe28/dsh-locale-zh-tw', 'module id equals the package name (got ' + captured.id + ')')
 check(typeof captured.factory === 'function', 'bundle exposes a lazy factory')
 
 const factory = captured.factory(() => {

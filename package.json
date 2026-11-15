@@ -1,7 +1,6 @@
 {
-  "name": "@local/dsh-locale-zh-tw",
+  "name": "@crystalvibe28/dsh-locale-zh-tw",
   "version": "1.2.0",
-  "private": true,
   "type": "module",
   "description": "Traditional Chinese (zh-TW) language pack for the DSH Web GUI",
   "keywords": [
