@@ -1,6 +1,6 @@
 {
  "schemaVersion": 1,
- "dshVersion": "0.2.2-rc.3",
+ "dshVersion": "0.2.2-rc.4",
  "dictionaries": {
   "actionCards": {
    "expandBrief": "展开",
