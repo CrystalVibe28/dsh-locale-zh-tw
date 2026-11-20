@@ -3,8 +3,8 @@
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）網頁介面的 **正體中文（台灣，`zh-TW`）語言包**，以 DSH 用戶端插件形式提供，並附上可重現的建置流程與 GitHub Actions 自動翻譯。
 
 - 語言選項：設定 → 一般 → 語言 → **正體中文**（切換即時生效，偏好持久化到 `locale.preference`）。
-- 覆蓋 **75 個 locale 命名空間、4,421 條介面文案**：DSH 內建的 73 個命名空間，加上已安裝插件（`dsh-pet` 的 `pet.config`／`pet.chat`）。
-- 插件名稱／描述（`LocalizedText`，530 條顯示文案，轉出 515 條）也一併轉成正體中文。
+- 覆蓋 **80 個 locale 命名空間、5,024 條介面文案**：DSH 內建的 76 個命名空間，加上已安裝插件（`dsh-pet` 的 `pet.config`／`pet.chat`、`@linxin666/dsh-client-ui-task-board` 的 `task-board`、`@ayanehana/dsh-reasoning-effort` 的 `reasoning-effort`）。
+- 插件名稱／描述（`LocalizedText`，546 條顯示文案，轉出 528 條）也一併轉成正體中文。
 - 未收錄的簡體文字以 3,241 對字元對照表＋術語表即時轉換；英文與已是正體中文的文字不受影響。
 - 缺譯或未來新增的文案會沿 `zh-TW → zh → en` fallback 鏈顯示，不會出現空白或 key。
 
@@ -41,7 +41,7 @@ plugin_manager install_bundle target=link:/absolute/path/to/dsh-locale-zh-tw
 
 1. `tools/build.mjs` 讀取 DSH 的編譯後 client bundle（`lib/client.js`）與顯示中繼資料（`locale/*.json`，含 `locale/<子路徑>/`），以 `@babel/parser` **靜態解析**每個插件 `ctx.locale.register(...)` 註冊的簡體字典——不是正規表達式猜測。
 2. 逐字串以 [OpenCC](https://github.com/BYVoid/OpenCC) `cn → twp` 轉換為正體中文／台灣標準用語。
-3. 套用 38 條台灣用語校正規則，修正 OpenCC 無法消歧或台灣不常用的詞：`只`／`隻`、`並`／`併`、`帳號`、`權限`、`設定`、`核准`、`計畫`、`回覆`、`實例`、`回饋`、`存取`、`使用者`、`儲存庫`、`等級`、`外掛套件` 等。
+3. 套用 48 條台灣用語校正規則，修正 OpenCC 無法消歧或台灣不常用的詞：`只`／`隻`、`並`／`併`、`帳號`、`帳本`、`權限`、`設定`、`核准`、`計畫`、`回覆`、`實例`、`回饋`、`存取`、`使用者`、`儲存庫`、`等級`、`外掛套件` 等。
 4. 產生插件中繼資料對照表與字元 fallback 表；Client 端在 `zh-TW` 作用時以 `resolveText` 轉接器套用（卸載時還原）。
 5. 品質閘門：placeholder 對齊、換行數一致、字典與中繼資料皆無殘留簡體字；報告寫入 `tools/out/qa-report.json`。
 6. `tools/verify-client.mjs` 以 VM 載入產生的 bundle，對照真實 `LocaleRuntime` 的驗證／查找契約做煙霧測試（字典註冊、fallback、中繼資料轉換、卸載還原）。

@@ -80,6 +80,7 @@ const GLOSSARY = [
   ['賬號', '帳號'],
   ['賬戶', '帳戶'],
   ['賬單', '帳單'],
+  ['賬本', '帳本'],
   ['檔位', '等級'],
   ['憑據', '憑證'],
   ['校驗', '驗證'],
@@ -100,6 +101,7 @@ const GLOSSARY = [
   ['迴復', '回覆'],
   ['併發執行', '並行執行'],
   ['併發送', '並發送'],
+  ['併入隊', '並入隊'],
   ['周{weekday}', '週{weekday}'],
   ['周的周', '週的週'],
   ['訪問網頁', '造訪網頁'],
@@ -128,6 +130,7 @@ const REVIEWED_AMBIGUOUS_CHARACTERS = new Map([
   ['准', '批准 uses 准 (permit), which is standard Traditional; 準 is the standard/exact sense.'],
   ['台', '控制台/平台/後台 are written with 台 in Taiwan; 臺 is the formal variant, not a correction.'],
   ['游', '游標 (cursor) is standard Taiwan copy and keeps 游; 遊 is the travel sense.'],
+  ['里', '阿里雲 (Alibaba Cloud) uses 里, which is standard Traditional; 裏 is the inside sense.'],
 ])
 
 /**
@@ -321,7 +324,7 @@ if (mode === 'snapshot') {
     const knownNames = new Set(packages.map((manifest) => manifest.name))
     const profileParents = new Set(localeMessages.map((message) => parentPackageOf(message.packageName)))
     const profileCandidates = new Set([
-      ...profileParents,
+      ...[...profileParents].filter((name) => name.startsWith('@deepseek-ai/')),
       ...installedBundles.filter((name) => name.startsWith('@deepseek-ai/')),
     ])
     for (const name of profileCandidates) {
